@@ -45,3 +45,23 @@ INFO[0000] Exiting...
 
 ### 生产者发送消息
 
+- 作为生产者发送一条msg，显示详细日志，如果exchange不存在则创建默认的
+
+```
+./rabbitmq-bench producer --log=debug --declare  -n 1 e-name q-name 00message00
+```
+
+- 作为生产者发送大量msg(100000)，显示发送的统计信息
+
+```
+$ ./rabbitmq-bench producer --declare  -n 100000 e-name q-name 00message00
+```
+
+
+
+消费者接收消息
+
+```
+$ ./rabbitmq-bench consumer --log=debug --declare --stat.interval=1 e-name q-name
+```
+

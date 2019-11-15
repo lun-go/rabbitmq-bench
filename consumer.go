@@ -125,13 +125,7 @@ func (c *Consumer) handle(deliveries <-chan amqp.Delivery, id string) {
 		})
 		i++
 		if i%c.opt.consumerStatInvertal == 0 {
-			now := time.Now()
-			logmq.End("lllll", Fields{
-				"delay": now.Sub(d.Timestamp).Milliseconds(),
-				"now":   now.UnixNano(),
-				"d":     d.Timestamp.UnixNano(),
-			})
-			c.builder.Parse(d.Body, id)
+			c.builder.Parse(c.opt, &d, id)
 		}
 	}
 

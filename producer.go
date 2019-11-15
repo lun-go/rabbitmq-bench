@@ -78,7 +78,7 @@ func (p *Producer) Publish(wg *sync.WaitGroup) error {
 			go func() {
 				start := time.Now()
 				for i := 1; i <= p.opt.msgCount; i++ {
-					err = p.publishOne(channel, p.builder.Format(p.opt.message))
+					err = p.publishOne(channel, p.opt.message)
 					if err != nil {
 						logmq.Warn("publish exchange", Fields{
 							"error": err,
@@ -92,7 +92,11 @@ func (p *Producer) Publish(wg *sync.WaitGroup) error {
 				}
 
 				v := time.Now().Sub(start).Seconds()
-				fmt.Printf("producer -> count:%v.\ttime:%v.\trate:%v/s\n", p.opt.msgCount, v, float64(p.opt.msgCount)/v)
+				logmq.End("producer stat", Fields{
+					"count":    p.opt.msgCount,
+					"time(s)":  v,
+					"rate(/s)": int(float64(p.opt.msgCount) / v),
+				})
 				wg.Done()
 			}()
 		}
@@ -100,7 +104,7 @@ func (p *Producer) Publish(wg *sync.WaitGroup) error {
 	return nil
 }
 
-func (p *Producer) publishOne(channel *amqp.Channel, body []byte) error {
+func (p *Producer) publishOne(channel *amqp.Channel, body string) error {
 	logmq.Debug("publishing msg ", Fields{
 		"exchange": p.opt.exchange,
 		"key":      p.opt.routingKey,
@@ -108,20 +112,13 @@ func (p *Producer) publishOne(channel *amqp.Channel, body []byte) error {
 		"len":      len(body),
 	})
 
+	pm := p.builder.Format(p.opt, body)
 	err := channel.Publish(
 		p.opt.exchange,   // publish to an exchange
 		p.opt.routingKey, // routing to 0 or more queues
 		false,            // mandatory
 		false,            // immediate
-		amqp.Publishing{
-			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
-			ContentEncoding: "",
-			Body:            body,
-			DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
-			Priority:        0,              // 0-9
-			// a bunch of application/implementation-specific fields
-		},
+		*pm,
 	)
 
 	if err != nil {

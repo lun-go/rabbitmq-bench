@@ -12,7 +12,7 @@ func main() {
 	cmd := flagParse()
 	logmq.SetLevel(Option.logLevel)
 
-	var buider bodyBuilder
+	var buider Builder
 	switch Option.builder {
 	case "time":
 		buider = &BodyTimer{}
